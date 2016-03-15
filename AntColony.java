@@ -261,7 +261,7 @@ public class AntColony extends Main{
 
             }
         }else{
-
+            ;
         }
     }
 
