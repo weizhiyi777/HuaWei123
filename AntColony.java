@@ -9,7 +9,7 @@ public class AntColony extends Main{
 
 
     static int antIDNum;
-    int antID, antPlaceNow, antPlaceDes, antWait, antPathLength;
+    int antID, antPlaceNow, antPlaceDes, antWait, antPreFlag;
     boolean antFood;
     ArrayList antPath;
     Random rand = new Random();
@@ -36,7 +36,7 @@ public class AntColony extends Main{
         this.antPlaceDes = 0; //蚂蚁将要去的位置
         this.antWait =  0; // 蚂蚁此刻是否处于等待状态。0代表不需要等待，可以出发，大于零的任意整数 x 代表所需要等待的时间。
         this.antFood = false; // 蚂蚁此刻是否拥有从终点取得的食物。有食物，则要在节点释放信息素，没有食物，则不在结点释放信息素。
-        this.antPathLength = 0; // antPath 共分为两部分，第一部分是经过的点，第二部分是搜索过程中遇到的死胡同。所以antPathLength是分界线
+        this.antPreFlag = 0; // antPath 共分为两部分，第一部分是经过的点，第二部分是搜索过程中遇到的死胡同。所以antPreFlag是分界线
         this.antPath = new ArrayList();
 
     }
@@ -240,7 +240,7 @@ public class AntColony extends Main{
                 antIndividual.antPlaceDes = pointNext;
                 antIndividual.antWait = dataArrays[arrayNum].costID - 1;
                 antIndividual.antPath.add(pointNow);
-                antIndividual.antPathLength ++ ;
+                antIndividual.antPreFlag ++ ;
 
             } else {
                 //arrayNum == -1, means that current point doesn't have children point.
@@ -249,7 +249,6 @@ public class AntColony extends Main{
                 antIndividual.antPlaceNow = pointNext;
                 antIndividual.antPlaceDes = pointNow;
                 antIndividual.antPath.add(pointNow);
-
             }
         }else{
 
