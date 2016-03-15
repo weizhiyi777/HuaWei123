@@ -9,10 +9,12 @@ public class AntColony extends Main{
 
 
     static int antIDNum;
-    int antID, antPlaceNow, antPlaceDes, antWait;
+    int antID, antPlaceNow, antPlaceDes, antWait, antPathLength;
     boolean antFood;
     ArrayList antPath;
     Random rand = new Random();
+    static int startPoint;
+    static int endPoint;
 
     public AntColony(){
 
@@ -34,6 +36,7 @@ public class AntColony extends Main{
         this.antPlaceDes = 0; //蚂蚁将要去的位置
         this.antWait =  0; // 蚂蚁此刻是否处于等待状态。0代表不需要等待，可以出发，大于零的任意整数 x 代表所需要等待的时间。
         this.antFood = false; // 蚂蚁此刻是否拥有从终点取得的食物。有食物，则要在节点释放信息素，没有食物，则不在结点释放信息素。
+        this.antPathLength = 0; // antPath 共分为两部分，第一部分是经过的点，第二部分是搜索过程中遇到的死胡同。所以antPathLength是分界线
         this.antPath = new ArrayList();
 
     }
@@ -45,16 +48,20 @@ public class AntColony extends Main{
         int processCount; //蚁群算法运行时间计数器
         int timeMax = 10000; //蚁群算法运行的最多时间
 
+        startPoint = pointStart;
+        endPoint = pointEnd;
+
         //初始化antNumMax数量的蚂蚁
         for(iC = 0; iC < antColonies.length; iC++){
             antColonies[iC] = new AntColony();
             antColonies[iC].antPlaceNow = pointStart;
+            antColonies[iC].antPlaceDes = pointStart;
         }
         System.out.println("Ant Colony has completed initialization.");
 
         //开始运行蚁群算法
         for(iC = 0; iC < timeMax; iC++){
-            dataAntMethod.antProcess(dataArrays, pointEnd);
+            dataAntMethod.antProcess(dataArrays);
         }
 
         //输出蚁群算法的计算结果
@@ -62,7 +69,7 @@ public class AntColony extends Main{
 
     }
 
-    public void antProcess(DataStructure[] dataArrays, int pointEnd){
+    public void antProcess(DataStructure[] dataArrays){
         int iC;
 
         /*
@@ -127,7 +134,7 @@ public class AntColony extends Main{
     public ArrayList pointChildSearch(DataStructure[] dataArrays, AntColony antIndividual){
         ArrayList pointChildAddr = new ArrayList();
         //获取ant当前的位置
-        int placeNow = antIndividual.antPlaceNow;
+        int placeNow = antIndividual.antPlaceDes;
         int iC;
 
         /*
@@ -217,7 +224,36 @@ public class AntColony extends Main{
     }
 
     public void antSet(DataStructure[] dataArrays, AntColony antIndividual, int arrayNum){
+        int pointNext;
+        int pointNow;
+        int pointPre;
 
+        //check if the antIndividual.antPlaceDes is the pointEnd
+        if(antIndividual.antPlaceDes != endPoint){
+            //check the value of arrayNum.
+            if (arrayNum > (-1)) {
+                //arrayNum > -1, means that current point has children point.
+                //更新ant的各项状态
+                pointNext = dataArrays[arrayNum].destinationID;
+                pointNow = antIndividual.antPlaceNow;
+                antIndividual.antPlaceNow = antIndividual.antPlaceDes;
+                antIndividual.antPlaceDes = pointNext;
+                antIndividual.antWait = dataArrays[arrayNum].costID - 1;
+                antIndividual.antPath.add(pointNow);
+                antIndividual.antPathLength ++ ;
+
+            } else {
+                //arrayNum == -1, means that current point doesn't have children point.
+                pointNext = antIndividual.antPlaceDes;
+                pointNow = antIndividual.antPlaceNow;
+                antIndividual.antPlaceNow = pointNext;
+                antIndividual.antPlaceDes = pointNow;
+                antIndividual.antPath.add(pointNow);
+
+            }
+        }else{
+
+        }
     }
 
     public void antResultShow(DataStructure[] dataArrays){
