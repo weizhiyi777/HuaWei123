@@ -25,7 +25,7 @@ public class AntColony extends Main{
         因为：antWait == 0 {
             antPlaceNow = B; antPlaceDes = C;
             antWait = y
-        }周而复始
+        } 周而复始
          */
 
         this.antID = antIDNum; // 蚂蚁编号
