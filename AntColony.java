@@ -9,7 +9,7 @@ public class AntColony extends Main{
 
 
     static int antIDNum;
-    int antID, antPlaceNow, antPlaceDes, antWait, antPreFlag;
+    int antID, antPlaceNow, antPlaceDes, antWait, antPreFlag, antReturnFlag;
     boolean antFood;
     ArrayList antPath;
     Random rand = new Random();
@@ -37,6 +37,7 @@ public class AntColony extends Main{
         this.antWait =  0; // 蚂蚁此刻是否处于等待状态。0代表不需要等待，可以出发，大于零的任意整数 x 代表所需要等待的时间。
         this.antFood = false; // 蚂蚁此刻是否拥有从终点取得的食物。有食物，则要在节点释放信息素，没有食物，则不在结点释放信息素。
         this.antPreFlag = 0; // antPath 共分为两部分，第一部分是经过的点，第二部分是搜索过程中遇到的死胡同。所以antPreFlag是分界线,其值表示的是antPath中经过点的个数。
+        this.antReturnFlag = 0; // 如果是遇到无子节点原路返回的情况，则antReturnFlag++,其值表示连续原路返回经过的点的个数。
         this.antPath = new ArrayList();
 
     }
@@ -106,6 +107,8 @@ public class AntColony extends Main{
                 dataAntMethod.antSet(dataArrays, antIndividual, arrayNum);
             }else{
                 //ant释放信息素
+                arrayNum = -2;
+                dataAntMethod.antSet(dataArrays, antIndividual, arrayNum);
                 dataArrays[arrayNum].infoMount = dataArrays[arrayNum].infoMount + 100;
             }
 
@@ -223,51 +226,111 @@ public class AntColony extends Main{
     }
 
     public void antSet(DataStructure[] dataArrays, AntColony antIndividual, int arrayNum){
+
         int pointNext;
-        int pointNow;
         int pathFlag;
         int costTemp;
 
-        //check if the antIndividual.antPlaceDes is the endPoint
-        if(antIndividual.antPlaceDes != endPoint){
-            //check the value of arrayNum.
-            if (arrayNum > (-1)) {
-                //arrayNum > -1, means that current point has children point.
-                //更新ant的各项状态
-                pointNext = antIndividual.antPlaceDes;
+        //check if this ant carries food from destination.
+        if(!antIndividual.antFood) {
+            //This ant doesn't carry food from destination.
 
-                antIndividual.antPath.add(antIndividual.antPreFlag, pointNext);
-                antIndividual.antPreFlag ++ ;
-                antIndividual.antPlaceNow = antIndividual.antPlaceDes;
-                antIndividual.antPlaceDes = dataArrays[arrayNum].destinationID;
-                antIndividual.antWait = dataArrays[arrayNum].costID - 1;
+            //check if the antIndividual.antPlaceDes is the endPoint
+            if (antIndividual.antPlaceDes != endPoint) {
+                //check the value of arrayNum.
+                if (arrayNum > (-1)) {
+                    //arrayNum > -1, means that current point has children point.
+                    //更新ant的各项状态
+                    pointNext = antIndividual.antPlaceDes;
 
+                    antIndividual.antPath.add(antIndividual.antPreFlag, pointNext);
+                    antIndividual.antPreFlag++;
+                    antIndividual.antPlaceNow = antIndividual.antPlaceDes;
+                    antIndividual.antPlaceDes = dataArrays[arrayNum].destinationID;
+                    antIndividual.antReturnFlag = 0;
+                    antIndividual.antWait = dataArrays[arrayNum].costID - 1;
+
+                } else {
+                    //arrayNum == -1, means that current point doesn't have children point.
+                    pointNext = antIndividual.antPlaceDes;
+
+                    antIndividual.antPath.add(antIndividual.antPreFlag, pointNext);
+                    antIndividual.antPlaceNow = pointNext;
+                    pathFlag = antIndividual.antPreFlag - 1;
+                    antIndividual.antPlaceDes = (int) antIndividual.antPath.get(pathFlag);
+                    antIndividual.antReturnFlag++;
+
+                    costTemp = dataAntMethod.costSearch(dataArrays, antIndividual.antPlaceNow, antIndividual.antPlaceDes);
+                    if (costTemp > -1) {
+                        antIndividual.antWait = 20;
+                    } else {
+                        antIndividual.antWait = costTemp - 1;
+                    }
+
+                    antIndividual.antPath.remove(pathFlag);
+                    antIndividual.antPreFlag--;
+
+                    if (antIndividual.antReturnFlag > 1) {
+                        dataAntMethod.pathRemove(antIndividual);
+                    }
+                }
             } else {
-                //arrayNum == -1, means that current point doesn't have children point.
-                pointNext = antIndividual.antPlaceDes;
+                //antPlaceDes is the endPoint
 
-                antIndividual.antPath.add(antIndividual.antPreFlag, pointNext);
+                pointNext = antIndividual.antPlaceDes;
                 antIndividual.antPlaceNow = pointNext;
-                pathFlag = antIndividual.antPreFlag - 1;
-                antIndividual.antPlaceDes = (int)antIndividual.antPath.get(pathFlag);
+                antIndividual.antPlaceDes = (int) antIndividual.antPath.get(antIndividual.antPreFlag - 1);
+
                 costTemp = dataAntMethod.costSearch(dataArrays, antIndividual.antPlaceNow, antIndividual.antPlaceDes);
-                if(costTemp > -1){
+                if (costTemp > -1) {
                     antIndividual.antWait = 20;
-                }else{
+                } else {
                     antIndividual.antWait = costTemp - 1;
                 }
-                antIndividual.antPath.remove(pathFlag);
-                antIndividual.antPreFlag -- ;
+
+                antIndividual.antPath.remove(antIndividual.antPreFlag - 1);
+                antIndividual.antPreFlag--;
+
+                antIndividual.antFood = true;
+                dataAntMethod.pathRemove(antIndividual);
+                antIndividual.antReturnFlag = 0;
 
             }
         }else{
-            ;
+            // This ant carries food from destination.
+
+            if(antIndividual.antPlaceDes != startPoint){
+                //The coming place is not startPoint. Keep going.
+                pointNext = antIndividual.antPlaceDes;
+                antIndividual.antPlaceNow = pointNext;
+                antIndividual.antPlaceDes = (int) antIndividual.antPath.get(antIndividual.antPreFlag - 1);
+
+                costTemp = dataAntMethod.costSearch(dataArrays, antIndividual.antPlaceNow, antIndividual.antPlaceDes);
+                if (costTemp > -1) {
+                    antIndividual.antWait = 20;
+                } else {
+                    antIndividual.antWait = costTemp - 1;
+                }
+
+                antIndividual.antPath.remove(antIndividual.antPreFlag - 1);
+                antIndividual.antPreFlag--;
+            }else{
+                //The coming place is startPoint. Initial the ant's factors.
+                antIndividual.antPlaceDes = startPoint;
+                antIndividual.antPlaceNow = startPoint;
+                antIndividual.antWait =  0;
+                antIndividual.antFood = false;
+                antIndividual.antPreFlag = 0;
+                antIndividual.antReturnFlag = 0;
+                antIndividual.antPath.clear();
+            }
+
         }
     }
 
     public int costSearch(DataStructure[] dataArrays, int pointStart, int pointEnd){
         int iC;
-        int cost = - 1;
+        int cost = -1;
 
         for(iC = 0; iC < dataArrays.length; iC++){
             if((dataArrays[iC].sourceID == pointStart) && (dataArrays[iC].destinationID == pointEnd)){
@@ -278,6 +341,16 @@ public class AntColony extends Main{
 
         System.out.println("There is something wrong in method costSearch");
         return cost;
+    }
+
+    public void pathRemove(AntColony antIndividual){
+        int preFlag = antIndividual.antPreFlag;
+        int pathLength = antIndividual.antPath.size();
+        int iC;
+
+        for(iC = pathLength - 1; iC > preFlag; iC --){
+            antIndividual.antPath.remove(iC);
+        }
     }
 
     public void antResultShow(DataStructure[] dataArrays){
