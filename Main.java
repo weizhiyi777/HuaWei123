@@ -11,7 +11,8 @@ public class Main {
     final static int pointMax = 25;
     final static int costMax = 10;
     final static int costIfi = 100000;
-    final static int antNumMax = lineNumMax * 10;
+    final static int antNumMax = 1;
+    final static int infoMountAdd = 100;
     static int pointsQueueStartNum = 0;
     static ArrayList pointsQueue1 = new ArrayList();
 
@@ -25,7 +26,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        int produceFlag = 0; // 决定是否产生数据
+        int produceFlag = 1; // 决定是否产生数据
         int dataReadFlag = 1;// 决定是否读取数据并进行处理和计算
 
 	    System.out.println("Welcome to  the Code Craft Competition.");
@@ -186,9 +187,9 @@ public class Main {
             e.printStackTrace();
         }
 
-        DataStructure[] dataArrays = new DataStructure[dataNum - 1];
+        DataStructure[] dataArrays0 = new DataStructure[dataNum - 1];
         for(iC = 0; iC < (dataNum - 1); iC++){
-                dataArrays[iC] = new DataStructure();
+                dataArrays0[iC] = new DataStructure();
         }
 
         for(iC = 0; iC < (dataNum - 1); iC++){
@@ -200,11 +201,13 @@ public class Main {
             }
 
             //数据记录
-            dataArrays[iC].linkID = dataContainer[0];
-            dataArrays[iC].sourceID = dataContainer[1];
-            dataArrays[iC].destinationID = dataContainer[2];
-            dataArrays[iC].costID = dataContainer[3];
+            dataArrays0[iC].linkID = dataContainer[0];
+            dataArrays0[iC].sourceID = dataContainer[1];
+            dataArrays0[iC].destinationID = dataContainer[2];
+            dataArrays0[iC].costID = dataContainer[3];
         }
+
+        DataStructure[] dataArrays = dataSimplify(dataArrays0);
 
         jC = 0;
         for(String retval : dataLine[dataNum-1].split(",",2)){
@@ -232,6 +235,59 @@ public class Main {
         }
 
 
+    }
+
+    public DataStructure[] dataSimplify(DataStructure[] dataArrays0){
+        int dataArraysLength = 0;
+        int dataArraysLength0 = dataArrays0.length;
+        int iC, jC;
+
+        int arrayFlag[] = new int[dataArraysLength0];
+        for(iC = 0; iC < dataArraysLength0; iC++){
+            arrayFlag[iC] = 1;
+        }
+
+        for(iC = 0; iC < dataArraysLength0; iC ++){
+            if(arrayFlag[iC] == 1){
+                for(jC = iC + 1; jC <dataArraysLength0; jC ++){
+                    if((dataArrays0[iC].sourceID == dataArrays0[jC].sourceID) && (dataArrays0[iC].destinationID == dataArrays0[jC].destinationID)){
+                        if(dataArrays0[iC].costID <= dataArrays0[jC].costID){
+                            arrayFlag[iC] = 1;
+                            arrayFlag[jC] = 0;
+                        }else{
+                            arrayFlag[iC] = 0;
+                            arrayFlag[jC] = 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        for(iC = 0; iC < dataArraysLength0; iC++){
+            if(arrayFlag[iC] == 1){
+                dataArraysLength ++;
+            }
+        }
+
+        DataStructure[] dataArrays = new DataStructure[dataArraysLength];
+
+        jC = 0;
+        for(iC = 0; iC < dataArraysLength0; iC++){
+            if(arrayFlag[iC] == 1){
+                dataArrays[jC] = dataArrays0[iC];
+                jC++;
+            }
+        }
+
+        if(jC == dataArraysLength){
+
+            System.out.println("DataSimplify is successful");
+
+        }else{
+            System.out.println("Something wrong in dataSimplify");
+        }
+
+        return dataArrays;
     }
 
     public void dataBFSIni(DataStructure[] dataArrays, int pointStart, int pointEnd){

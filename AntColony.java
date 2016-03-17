@@ -1,5 +1,6 @@
 package com.company;
 
+import javax.sound.midi.SysexMessage;
 import java.util.ArrayList;
 import java.util.Random;
 /**
@@ -62,6 +63,7 @@ public class AntColony extends Main{
 
         //开始运行蚁群算法
         for(iC = 0; iC < timeMax; iC++){
+            ;
             dataAntMethod.antProcess(dataArrays);
         }
 
@@ -299,9 +301,17 @@ public class AntColony extends Main{
         }else{
             // This ant carries food from destination.
 
+            int pointNow;
+            int infoLineNum;
             if(antIndividual.antPlaceDes != startPoint){
+
                 //The coming place is not startPoint. Keep going.
                 pointNext = antIndividual.antPlaceDes;
+                pointNow = antIndividual.antPlaceNow;
+
+                infoLineNum = lineSearch(dataArrays, pointNow, pointNext);
+                dataArrays[infoLineNum].infoMount = dataArrays[infoLineNum].infoMount + infoMountAdd;
+
                 antIndividual.antPlaceNow = pointNext;
                 antIndividual.antPlaceDes = (int) antIndividual.antPath.get(antIndividual.antPreFlag - 1);
 
@@ -316,6 +326,12 @@ public class AntColony extends Main{
                 antIndividual.antPreFlag--;
             }else{
                 //The coming place is startPoint. Initial the ant's factors.
+
+                pointNext = antIndividual.antPlaceDes;
+                pointNow = antIndividual.antPlaceNow;
+                infoLineNum = lineSearch(dataArrays, pointNow, pointNext);
+                dataArrays[infoLineNum].infoMount = dataArrays[infoLineNum].infoMount + infoMountAdd;
+
                 antIndividual.antPlaceDes = startPoint;
                 antIndividual.antPlaceNow = startPoint;
                 antIndividual.antWait =  0;
@@ -329,18 +345,34 @@ public class AntColony extends Main{
     }
 
     public int costSearch(DataStructure[] dataArrays, int pointStart, int pointEnd){
+        int lineNum;
+        int cost;
+
+        lineNum = lineSearch(dataArrays, pointStart, pointEnd);
+
+        if(lineNum > (-1)){
+            cost = dataArrays[lineNum].costID;
+            return cost;
+        }else{
+            System.out.println("There is something wrong in method costSearch");
+            cost = -1;
+            return cost;
+        }
+    }
+
+    public int lineSearch(DataStructure[] dataArrays, int pointStart, int pointEnd){
+        int lineNum = -1;
         int iC;
-        int cost = -1;
 
         for(iC = 0; iC < dataArrays.length; iC++){
             if((dataArrays[iC].sourceID == pointStart) && (dataArrays[iC].destinationID == pointEnd)){
-                cost = dataArrays[iC].costID;
-                return cost;
+                lineNum = iC;
+                return lineNum;
             }
         }
 
-        System.out.println("There is something wrong in method costSearch");
-        return cost;
+        System.out.println("Something wrong in lineSearch");
+        return lineNum;
     }
 
     public void pathRemove(AntColony antIndividual){
@@ -354,6 +386,14 @@ public class AntColony extends Main{
     }
 
     public void antResultShow(DataStructure[] dataArrays){
+        int iC;
+
         System.out.println("Here is the result of Ant Colony Optimization about this question");
+        System.out.println();
+
+        for(iC = 0; iC < dataArrays.length; iC++){
+            System.out.println("LinkID: " + dataArrays[iC].linkID + ", infoMount: " + dataArrays[iC].infoMount);
+        }
+
     }
 }
