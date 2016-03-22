@@ -1,6 +1,5 @@
 package com.company;
 
-import javax.sound.midi.SysexMessage;
 import java.util.ArrayList;
 import java.util.Random;
 /**
@@ -10,12 +9,16 @@ public class AntColony extends Main{
 
 
     static int antIDNum;
+    static int startPoint;
+    static int endPoint;
+    static ArrayList antResult;
+    static ArrayList antResult1 = new ArrayList();
+    static ArrayList antResult2 = new ArrayList();
     int antID, antPlaceNow, antPlaceDes, antWait, antPreFlag, antReturnFlag;
     boolean antFood;
     ArrayList antPath;
     Random rand = new Random();
-    static int startPoint;
-    static int endPoint;
+
 
     public AntColony(){
 
@@ -47,7 +50,6 @@ public class AntColony extends Main{
 
     public void antIni(DataStructure[] dataArrays, int pointStart, int pointEnd){
         int iC;
-        int processCount; //蚁群算法运行次数计数器
         int timeMax = 10000; //蚁群算法运行的最多时间
 
         startPoint = pointStart;
@@ -59,17 +61,17 @@ public class AntColony extends Main{
             antColonies[iC].antPlaceNow = pointStart;
             antColonies[iC].antPlaceDes = pointStart;
         }
-        System.out.println("Ant Colony has completed initialization.");
+        System.out.println("PointStart is: " + startPoint + ", and pointEnd is: " + endPoint);
 
         //开始运行蚁群算法
         for(iC = 0; iC < timeMax; iC++){
-            ;
+//            System.out.println("Ant colony algorithm has run " + (iC + 1) + " times.");
             dataAntMethod.antProcess(dataArrays);
         }
 
         //输出蚁群算法的计算结果
+//        System.out.println("Now show the result of ant colony algorithm");
         dataAntMethod.antResultShow(dataArrays);
-
     }
 
     public void antProcess(DataStructure[] dataArrays){
@@ -80,7 +82,8 @@ public class AntColony extends Main{
         每执行一次当前的方法，则表示经过了一个单位时间。
          */
         for(iC = 0; iC < antNumMax; iC++){
-            dataAntMethod.antUpdata(dataArrays, antColonies[iC]);
+//            System.out.println("This is the " + iC + "th ant.");
+            dataAntMethod.antUpdate(dataArrays, antColonies[iC]);
         }
 
         /*
@@ -92,11 +95,10 @@ public class AntColony extends Main{
                 dataArrays[iC].infoMount -- ;
             }
         }
-
     }
 
-    public void antUpdata(DataStructure[] dataArrays, AntColony antIndividual){
-        int arrayNum = 0;
+    public void antUpdate(DataStructure[] dataArrays, AntColony antIndividual){
+        int arrayNum;
 
         //对于不处于等待状态的蚂蚁进行设置
         if(antIndividual.antWait == 0){
@@ -104,6 +106,7 @@ public class AntColony extends Main{
             if(!antFood) {
                 //为ant选择一条路径，arrayNum指的是所选路径对应的map中的序号
                 arrayNum = dataAntMethod.antPathChoose(dataArrays, antIndividual);
+//                System.out.println("ArrayNum is: " + arrayNum);
 
                 //更改ant的状态
                 dataAntMethod.antSet(dataArrays, antIndividual, arrayNum);
@@ -111,7 +114,7 @@ public class AntColony extends Main{
                 //ant释放信息素
                 arrayNum = -2;
                 dataAntMethod.antSet(dataArrays, antIndividual, arrayNum);
-                dataArrays[arrayNum].infoMount = dataArrays[arrayNum].infoMount + 100;
+//                dataArrays[arrayNum].infoMount = dataArrays[arrayNum].infoMount + 100;
             }
 
         }else{
@@ -202,7 +205,7 @@ public class AntColony extends Main{
                         iC++;
                     }
                     if(!flagLoop){
-                        System.out.println("There is something wrong here");
+                        System.out.println("There is something wrong in antDesChoose");
                     }else{
                         arrayNum = iC - 1;
                         arrayNum = (int)pointChildAddr.get(arrayNum);
@@ -221,7 +224,6 @@ public class AntColony extends Main{
 
             //当前位置没有子节点，返回-1
             arrayNum = -1;
-            System.out.println("该节点没有子节点");
             return arrayNum;
         }
 
@@ -262,7 +264,7 @@ public class AntColony extends Main{
                     antIndividual.antPlaceDes = (int) antIndividual.antPath.get(pathFlag);
                     antIndividual.antReturnFlag++;
 
-                    costTemp = dataAntMethod.costSearch(dataArrays, antIndividual.antPlaceNow, antIndividual.antPlaceDes);
+                    costTemp = dataAntMethod.costSearch(dataArrays, antIndividual.antPlaceDes, antIndividual.antPlaceNow);
                     if (costTemp > -1) {
                         antIndividual.antWait = 20;
                     } else {
@@ -274,6 +276,7 @@ public class AntColony extends Main{
 
                     if (antIndividual.antReturnFlag > 1) {
                         dataAntMethod.pathRemove(antIndividual);
+                        antIndividual.antReturnFlag = 1;
                     }
                 }
             } else {
@@ -283,7 +286,7 @@ public class AntColony extends Main{
                 antIndividual.antPlaceNow = pointNext;
                 antIndividual.antPlaceDes = (int) antIndividual.antPath.get(antIndividual.antPreFlag - 1);
 
-                costTemp = dataAntMethod.costSearch(dataArrays, antIndividual.antPlaceNow, antIndividual.antPlaceDes);
+                costTemp = dataAntMethod.costSearch(dataArrays, antIndividual.antPlaceDes, antIndividual.antPlaceNow);
                 if (costTemp > -1) {
                     antIndividual.antWait = 20;
                 } else {
@@ -309,13 +312,13 @@ public class AntColony extends Main{
                 pointNext = antIndividual.antPlaceDes;
                 pointNow = antIndividual.antPlaceNow;
 
-                infoLineNum = lineSearch(dataArrays, pointNow, pointNext);
-                dataArrays[infoLineNum].infoMount = dataArrays[infoLineNum].infoMount + infoMountAdd;
+                infoLineNum = lineSearch(dataArrays, pointNext, pointNow);
+                dataAntMethod.infoAdd(dataArrays, infoLineNum, pointNow, pointNext);
 
                 antIndividual.antPlaceNow = pointNext;
                 antIndividual.antPlaceDes = (int) antIndividual.antPath.get(antIndividual.antPreFlag - 1);
 
-                costTemp = dataAntMethod.costSearch(dataArrays, antIndividual.antPlaceNow, antIndividual.antPlaceDes);
+                costTemp = dataAntMethod.costSearch(dataArrays, antIndividual.antPlaceDes, antIndividual.antPlaceNow);
                 if (costTemp > -1) {
                     antIndividual.antWait = 20;
                 } else {
@@ -329,8 +332,8 @@ public class AntColony extends Main{
 
                 pointNext = antIndividual.antPlaceDes;
                 pointNow = antIndividual.antPlaceNow;
-                infoLineNum = lineSearch(dataArrays, pointNow, pointNext);
-                dataArrays[infoLineNum].infoMount = dataArrays[infoLineNum].infoMount + infoMountAdd;
+                infoLineNum = lineSearch(dataArrays, pointNext, pointNow);
+                dataAntMethod.infoAdd(dataArrays, infoLineNum, pointNow, pointNext);
 
                 antIndividual.antPlaceDes = startPoint;
                 antIndividual.antPlaceNow = startPoint;
@@ -354,7 +357,6 @@ public class AntColony extends Main{
             cost = dataArrays[lineNum].costID;
             return cost;
         }else{
-            System.out.println("There is something wrong in method costSearch");
             cost = -1;
             return cost;
         }
@@ -371,7 +373,6 @@ public class AntColony extends Main{
             }
         }
 
-        System.out.println("Something wrong in lineSearch");
         return lineNum;
     }
 
@@ -385,15 +386,200 @@ public class AntColony extends Main{
         }
     }
 
+    public void infoAdd(DataStructure[] dataArrays, int infoLineNum, int pointNow, int pointNext){
+
+        dataArrays[infoLineNum].infoMount = dataArrays[infoLineNum].infoMount + infoMountAdd;
+    }
+
     public void antResultShow(DataStructure[] dataArrays){
         int iC;
+        int infoLimit;
+
+        int detailShowFlag = 0;
+        int arraylistShowFlag = 1;
 
         System.out.println("Here is the result of Ant Colony Optimization about this question");
         System.out.println();
 
+        dataAntMethod.antResultSort(dataArrays);
+
+        if(!dataAntMethod.antResultJudge(dataArrays)){
+
+            System.out.println("There is no solution.");
+
+        }else {
+
+            if (detailShowFlag == 1) {
+                infoLimit = dataArrays[0].infoMount / 50;
+                for (iC = 0; iC < dataArrays.length; iC++) {
+                    if (dataArrays[iC].infoMount > infoLimit) {
+                        System.out.println("LinkID: " + dataArrays[iC].linkID + ", " + dataArrays[iC].sourceID + " - > " + dataArrays[iC].destinationID + ", cost: " + dataArrays[iC].costID + ", infoMount: " + dataArrays[iC].infoMount);
+                    }
+                }
+            }
+
+            if(arraylistShowFlag == 1){
+                int numTemp;
+                int costTotal = 0;
+                for(iC = 0; iC < antResult.size(); iC++){
+                    numTemp = (int)antResult.get(iC);
+                    costTotal = costTotal + dataArrays[numTemp].costID;
+                    System.out.println("LinkID: " + dataArrays[numTemp].linkID + ", " + dataArrays[numTemp].sourceID + " - > " + dataArrays[numTemp].destinationID + ", cost: " + dataArrays[numTemp].costID + ", infoMount: " + dataArrays[numTemp].infoMount);
+                }
+                System.out.println("CostTotal is: " + costTotal);
+            }
+
+        }
+    }
+
+    public void antResultSort(DataStructure[] dataArrays){
+        DataStructure dataTemp;
+        int iC, jC;
+
         for(iC = 0; iC < dataArrays.length; iC++){
-            System.out.println("LinkID: " + dataArrays[iC].linkID + ", infoMount: " + dataArrays[iC].infoMount);
+            for(jC = iC + 1; jC < dataArrays.length; jC++){
+                if(dataArrays[iC].infoMount < dataArrays[jC].infoMount){
+                    dataTemp = dataArrays[jC];
+                    dataArrays[jC] = dataArrays[iC];
+                    dataArrays[iC] = dataTemp;
+                }
+            }
+        }
+    }
+
+    public boolean antResultJudge(DataStructure[] dataArrays){
+        boolean resultFlag;
+
+        if(dataArrays[0].infoMount == 0){
+            resultFlag = false;
+        }else{
+            dataAntMethod.antResultFindIni(dataArrays);
+            resultFlag = true;
+        }
+        return resultFlag;
+    }
+
+    public void antResultFindIni(DataStructure[] dataArrays){
+        int resultStart;
+        int resultEnd;
+        int iC;
+        boolean searchFlag;
+        boolean resultFlag;
+        int cost1, cost2;
+
+        resultFlag = false;
+        antResult1.add(0);
+        dataArrays[0].chosenPath = 1;
+        while(!resultFlag) {
+            resultStart = dataArrays[(int)antResult1.get(0)].sourceID;
+            resultEnd = dataArrays[(int)antResult1.get(antResult1.size() - 1)].destinationID;
+            if (resultStart == startPoint && resultEnd == endPoint) {
+                resultFlag = true;
+            } else {
+                dataAntMethod.antResultFind1(dataArrays);
+            }
         }
 
+        cost1 = 0;
+        for(iC = 0; iC < antResult1.size(); iC++){
+            cost1 = cost1 + dataArrays[(int)antResult1.get(iC)].costID;
+        }
+
+        searchFlag = false;
+        resultFlag = false;
+
+        iC = 0;
+        while(!searchFlag){
+            if(dataArrays[iC].chosenPath == 0){
+                searchFlag = true;
+            }
+            iC++;
+        }
+        iC--;
+        antResult2.add(iC);
+        dataArrays[iC].chosenPath = 1;
+        while(!resultFlag) {
+            resultStart = dataArrays[(int)antResult2.get(0)].sourceID;
+            resultEnd = dataArrays[(int)antResult2.get(antResult2.size() - 1)].destinationID;
+            if (resultStart == startPoint && resultEnd == endPoint) {
+                resultFlag = true;
+            } else {
+                dataAntMethod.antResultFind2(dataArrays);
+            }
+        }
+
+        cost2 = 0;
+        for(iC = 0; iC < antResult2.size(); iC++){
+            cost2 = cost2 + dataArrays[(int)antResult2.get(iC)].costID;
+        }
+
+        if(cost2 >= cost1){
+            antResult = antResult1;
+        }else{
+            antResult = antResult2;
+        }
     }
+
+    public void antResultFind1(DataStructure[] dataArrays){
+        int resultStart = dataArrays[(int)antResult1.get(0)].sourceID;
+        int resultEnd = dataArrays[(int)antResult1.get(antResult1.size() - 1)].destinationID;
+        int iC;
+
+        if(resultStart != startPoint){
+            for(iC = 0; iC < dataArrays.length; iC++){
+                if(dataArrays[iC].infoMount > 0){
+                    if(dataArrays[iC].destinationID == resultStart){
+                        antResult1.add(0,iC);
+                        dataArrays[iC].chosenPath = 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(resultEnd != endPoint){
+            for(iC = 0; iC < dataArrays.length; iC++){
+                if(dataArrays[iC].infoMount > 0){
+                    if(dataArrays[iC].sourceID == resultEnd){
+                        antResult1.add(iC);
+                        dataArrays[iC].chosenPath = 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    public void antResultFind2(DataStructure[] dataArrays){
+        int resultStart = dataArrays[(int)antResult2.get(0)].sourceID;
+        int resultEnd = dataArrays[(int)antResult2.get(antResult2.size() - 1)].destinationID;
+        int iC;
+
+        if(resultStart != startPoint){
+            for(iC = 0; iC < dataArrays.length; iC++){
+                if(dataArrays[iC].infoMount > 0){
+                    if(dataArrays[iC].destinationID == resultStart){
+                        antResult2.add(0,iC);
+                        dataArrays[iC].chosenPath = 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(resultEnd != endPoint){
+            for(iC = 0; iC < dataArrays.length; iC++){
+                if(dataArrays[iC].infoMount > 0){
+                    if(dataArrays[iC].sourceID == resultEnd){
+                        antResult2.add(iC);
+                        dataArrays[iC].chosenPath = 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+
+
 }
